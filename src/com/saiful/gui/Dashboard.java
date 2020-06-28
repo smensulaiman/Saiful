@@ -1,5 +1,6 @@
 package com.saiful.gui;
 
+import com.saiful.ocr.APIClient;
 import com.saiful.utils.GlobalKeyListenerExample;
 import com.saiful.utils.GlobalKeyListenerExample1;
 import java.io.File;
@@ -9,6 +10,8 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -29,10 +32,10 @@ public class Dashboard extends javax.swing.JFrame {
         globalKeyListenerExample = new GlobalKeyListenerExample();
         globalKeyListenerExample1 = new GlobalKeyListenerExample1();
         File file = new File(System.getProperty("user.home") + "/Desktop/screenshot");
-        
-        if(file.isDirectory()){
+
+        if (file.isDirectory()) {
             System.out.println("Present");
-        }else{
+        } else {
             file.mkdir();
         }
     }
@@ -54,6 +57,9 @@ public class Dashboard extends javax.swing.JFrame {
         jPanel4 = new javax.swing.JPanel();
         btnScrStop1 = new javax.swing.JButton();
         btnScrStart1 = new javax.swing.JButton();
+        jPanel5 = new javax.swing.JPanel();
+        btnStartOCR = new javax.swing.JLabel();
+        txtImagePath = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setUndecorated(true);
@@ -180,6 +186,25 @@ public class Dashboard extends javax.swing.JFrame {
 
         jTabbedPane1.addTab("Screenshot (Name)", jPanel4);
 
+        jPanel5.setBackground(new java.awt.Color(255, 255, 255));
+        jPanel5.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        btnStartOCR.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        btnStartOCR.setIcon(new javax.swing.ImageIcon(getClass().getResource("/img/play-button.png"))); // NOI18N
+        btnStartOCR.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                btnStartOCRMouseClicked(evt);
+            }
+        });
+        jPanel5.add(btnStartOCR, new org.netbeans.lib.awtextra.AbsoluteConstraints(340, 0, 40, 50));
+
+        txtImagePath.setFont(new java.awt.Font("Times New Roman", 1, 11)); // NOI18N
+        txtImagePath.setForeground(new java.awt.Color(102, 102, 102));
+        txtImagePath.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 204, 153)));
+        jPanel5.add(txtImagePath, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 10, 320, 30));
+
+        jTabbedPane1.addTab("Image To Text", jPanel5);
+
         getContentPane().add(jTabbedPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 30, 390, -1));
 
         pack();
@@ -233,14 +258,14 @@ public class Dashboard extends javax.swing.JFrame {
 
     private void btnScrStartActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnScrStartActionPerformed
         // TODO add your handling code here:
-        
+
         globalKeyListenerExample.start();
         btnScrStart.setEnabled(false);
     }//GEN-LAST:event_btnScrStartActionPerformed
 
     private void btnScrStopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnScrStopActionPerformed
         // TODO add your handling code here:
-        
+
         globalKeyListenerExample.stop();
         btnScrStart.setEnabled(true);
     }//GEN-LAST:event_btnScrStopActionPerformed
@@ -256,6 +281,35 @@ public class Dashboard extends javax.swing.JFrame {
         globalKeyListenerExample1.start();
         btnScrStart1.setEnabled(false);
     }//GEN-LAST:event_btnScrStart1ActionPerformed
+
+    private void btnStartOCRMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnStartOCRMouseClicked
+        // TODO add your handling code here:
+        APIClient apiclient = new APIClient();
+        btnStartOCR.setEnabled(false);
+
+        String imagePath = txtImagePath.getText();
+        File file = new File(imagePath);
+        File[] images = file.listFiles();
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                for (File image : images) {
+                    try {
+                        String imagetoText = apiclient.getTextFromImage(image);
+                        if (imagetoText.equals("error")) {
+                            System.out.println(image.getName() + " is error");
+                        } else {
+                            System.out.println(imagetoText);
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+        }).start();
+
+    }//GEN-LAST:event_btnStartOCRMouseClicked
 
     /**
      * @param args the command line arguments
@@ -298,19 +352,22 @@ public class Dashboard extends javax.swing.JFrame {
     private javax.swing.JButton btnScrStop;
     private javax.swing.JButton btnScrStop1;
     private javax.swing.JLabel btnStart;
+    private javax.swing.JLabel btnStartOCR;
     private javax.swing.JLabel icCross;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
+    private javax.swing.JPanel jPanel5;
     private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JTextField txtImagePath;
     private javax.swing.JTextField txtPath;
     // End of variables declaration//GEN-END:variables
 
     GlobalKeyListenerExample globalKeyListenerExample;
     GlobalKeyListenerExample1 globalKeyListenerExample1;
-    
+
     private XSSFWorkbook workbook;
     private XSSFSheet spreadsheet;
     private FileOutputStream out;
@@ -354,7 +411,7 @@ public class Dashboard extends javax.swing.JFrame {
 
                 workbook.write(out);
                 out.close();
-                
+
                 btnStart.setEnabled(true);
                 JOptionPane.showMessageDialog(null, "Complete !!!");
 
